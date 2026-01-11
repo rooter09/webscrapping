@@ -1,7 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PlaywrightCrawler, Dataset } from 'crawlee';
-import { Page } from 'playwright';
 
 export interface ScrapedNavigation {
     title: string;
@@ -68,48 +66,41 @@ export class ScraperService {
         this.logger.log('Starting navigation scrape...');
         const results: ScrapedNavigation[] = [];
 
-        const crawler = new PlaywrightCrawler({
-            maxRequestsPerCrawl: 1,
-            requestHandlerTimeoutSecs: 60,
-            launchContext: {
-                launchOptions: {
-                    headless: true,
-                },
-            },
-            async requestHandler({ page, request }) {
-                await page.waitForLoadState('networkidle');
-                await this.delay(1000);
-
-                // Try to find navigation elements
-                const navItems = await page.$$eval(
-                    'nav a, header a, .navigation a, .nav-item a, [role="navigation"] a',
-                    (elements) =>
-                        elements
-                            .map((el) => ({
-                                title: el.textContent?.trim() || '',
-                                url: (el as HTMLAnchorElement).href || '',
-                            }))
-                            .filter((item) => item.title && item.url),
-                );
-
-                // Filter and deduplicate
-                const seen = new Set<string>();
-                navItems.forEach((item) => {
-                    const slug = this.createSlug(item.title);
-                    if (!seen.has(slug) && item.title.length > 2) {
-                        seen.add(slug);
-                        results.push({
-                            title: item.title,
-                            url: item.url,
-                            slug,
-                        });
-                    }
-                });
-            },
-        });
-
         try {
-            await crawler.run([this.baseUrl]);
+            const { chromium } = require('playwright');
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+
+            await page.goto(this.baseUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await this.delay(2000); // Increased delay to allow hydration
+
+            // Try to find navigation elements
+            const navItems = await page.$$eval(
+                'nav a, header a, .navigation a, .nav-item a, [role="navigation"] a',
+                (elements: any[]) =>
+                    elements
+                        .map((el) => ({
+                            title: el.textContent?.trim() || '',
+                            url: (el as HTMLAnchorElement).href || '',
+                        }))
+                        .filter((item) => item.title && item.url),
+            );
+
+            // Filter and deduplicate
+            const seen = new Set<string>();
+            navItems.forEach((item: { title: string; url: string }) => {
+                const slug = this.createSlug(item.title);
+                if (!seen.has(slug) && item.title.length > 2) {
+                    seen.add(slug);
+                    results.push({
+                        title: item.title,
+                        url: item.url,
+                        slug,
+                    });
+                }
+            });
+
+            await browser.close();
             this.logger.log(`Scraped ${results.length} navigation items`);
             return results;
         } catch (error) {
@@ -125,56 +116,58 @@ export class ScraperService {
         this.logger.log(`Scraping categories from: ${url}`);
         const results: ScrapedCategory[] = [];
 
-        const crawler = new PlaywrightCrawler({
-            maxRequestsPerCrawl: 1,
-            requestHandlerTimeoutSecs: 60,
-            launchContext: {
-                launchOptions: {
-                    headless: true,
-                },
-            },
-            async requestHandler({ page }) {
-                await page.waitForLoadState('networkidle');
-                await this.delay(1000);
-
-                // Look for category links
-                const categories = await page.$$eval(
-                    '.category a, .category-list a, .subcategory a, [data-category] a',
-                    (elements) =>
-                        elements
-                            .map((el) => {
-                                const title = el.textContent?.trim() || '';
-                                const url = (el as HTMLAnchorElement).href || '';
-                                const countMatch = title.match(/\((\d+)\)/);
-                                const productCount = countMatch
-                                    ? parseInt(countMatch[1], 10)
-                                    : undefined;
-
-                                return {
-                                    title: title.replace(/\(\d+\)/, '').trim(),
-                                    url,
-                                    productCount,
-                                };
-                            })
-                            .filter((item) => item.title && item.url),
-                );
-
-                const seen = new Set<string>();
-                categories.forEach((item) => {
-                    const slug = this.createSlug(item.title);
-                    if (!seen.has(slug)) {
-                        seen.add(slug);
-                        results.push({
-                            ...item,
-                            slug,
-                        });
-                    }
-                });
-            },
-        });
-
         try {
-            await crawler.run([url]);
+            const { chromium } = require('playwright');
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await this.delay(2000);
+
+            // Look for category links (Sidebar navigation)
+            const categories = await page.$$eval(
+                '.list-menu__item a, .facets__item a, .collection-list a',
+                (elements: any[]) =>
+                    elements
+                        .map((el) => {
+                            const title = el.textContent?.trim() || '';
+                            const url = (el as HTMLAnchorElement).href || '';
+                            // WOB specific: Filter out non-category links
+                            if (!url.includes('/collections/') && !url.includes('/category/')) return null;
+
+                            const countMatch = title.match(/\((\d+)\)/);
+                            const productCount = countMatch
+                                ? parseInt(countMatch[1], 10)
+                                : undefined;
+
+                            return {
+                                title: title.replace(/\(\d+\)/, '').trim(),
+                                url,
+                                productCount,
+                            };
+                        })
+                        .filter((item) => item && item.title && item.url),
+            );
+
+            const seen = new Set<string>();
+            categories.forEach((item: any) => {
+                if (!item) return;
+                const slug = this.createSlug(item.title);
+                if (!seen.has(slug)) {
+                    seen.add(slug);
+                    results.push({
+                        ...item,
+                        slug,
+                    });
+                }
+            });
+
+            // If empty, try fallback selectors
+            if (results.length === 0) {
+                // Fallback implementation if specific sidebars aren't found
+            }
+
+            await browser.close();
             this.logger.log(`Scraped ${results.length} categories`);
             return results;
         } catch (error) {
@@ -193,34 +186,35 @@ export class ScraperService {
         this.logger.log(`Scraping products from: ${url}`);
         const results: ScrapedProduct[] = [];
 
-        const crawler = new PlaywrightCrawler({
-            maxRequestsPerCrawl: maxPages,
-            requestHandlerTimeoutSecs: 60,
-            launchContext: {
-                launchOptions: {
-                    headless: true,
-                },
-            },
-            async requestHandler({ page, request }) {
-                await page.waitForLoadState('networkidle');
+        try {
+            const { chromium } = require('playwright');
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+
+            let currentPageUrl = url;
+            let pagesScraped = 0;
+
+            while (currentPageUrl && pagesScraped < maxPages) {
+                this.logger.log(`Scraping page ${pagesScraped + 1}: ${currentPageUrl}`);
+                await page.goto(currentPageUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
                 await this.delay(this.delayMs);
 
                 // Extract products from the page
                 const products = await page.$$eval(
-                    '.product, .product-item, [data-product], .book-item',
-                    (elements) =>
+                    '.main-product-card, .card-wrapper, .product-card',
+                    (elements: any[]) =>
                         elements.map((el) => {
                             const titleEl = el.querySelector(
-                                'h2, h3, .title, .product-title, .book-title',
+                                '.card__heading, h3.title, .product-title',
                             );
                             const authorEl = el.querySelector(
-                                '.author, .product-author, [data-author]',
-                            );
+                                '.caption-with-letter-spacing, .author, .product-author',
+                            ); // WOB/Shopify often puts author here
                             const priceEl = el.querySelector(
-                                '.price, .product-price, [data-price]',
+                                '.price-item--sale, .price-item--regular, .price',
                             );
-                            const imageEl = el.querySelector('img');
-                            const linkEl = el.querySelector('a');
+                            const imageEl = el.querySelector('.card__media img, .media img, img');
+                            const linkEl = el.querySelector('a.full-unstyled-link, .card__heading a, a');
 
                             const title = titleEl?.textContent?.trim() || '';
                             const author = authorEl?.textContent?.trim();
@@ -228,23 +222,29 @@ export class ScraperService {
                             const priceMatch = priceText.match(/[\d.]+/);
                             const price = priceMatch ? parseFloat(priceMatch[0]) : undefined;
                             const imageUrl = imageEl?.getAttribute('src') || imageEl?.getAttribute('data-src');
-                            const productUrl = linkEl?.getAttribute('href') || '';
+                            let productUrl = linkEl?.getAttribute('href') || '';
+
+                            // Fix relative image URLs
+                            let finalImageUrl = imageUrl;
+                            if (imageUrl && imageUrl.startsWith('//')) {
+                                finalImageUrl = 'https:' + imageUrl;
+                            }
 
                             return {
                                 title,
                                 author,
                                 price,
-                                imageUrl,
+                                imageUrl: finalImageUrl,
                                 productUrl,
                             };
                         }),
                 );
 
-                products.forEach((product) => {
+                products.forEach((product: any) => {
                     if (product.title && product.productUrl) {
                         const fullUrl = product.productUrl.startsWith('http')
                             ? product.productUrl
-                            : new URL(product.productUrl, request.loadedUrl).href;
+                            : new URL(product.productUrl, currentPageUrl).href;
 
                         const sourceId = this.extractProductId(fullUrl);
 
@@ -254,7 +254,7 @@ export class ScraperService {
                             author: product.author,
                             price: product.price,
                             currency: 'GBP',
-                            imageUrl: product.imageUrl,
+                            imageUrl: product.imageUrl || undefined,
                             sourceUrl: fullUrl,
                         });
                     }
@@ -262,18 +262,17 @@ export class ScraperService {
 
                 // Try to find next page link
                 const nextPageUrl = await page.$eval(
-                    '.next, .pagination-next, a[rel="next"], .page-next',
-                    (el) => (el as HTMLAnchorElement).href,
+                    '.pagination__item--next, a[rel="next"], .next',
+                    (el: any) => (el as HTMLAnchorElement).href,
                 ).catch(() => null);
 
-                if (nextPageUrl && results.length < maxPages * 20) {
-                    await crawler.addRequests([nextPageUrl]);
-                }
-            },
-        });
+                if (results.length >= maxPages * 20) break;
 
-        try {
-            await crawler.run([url]);
+                currentPageUrl = nextPageUrl;
+                pagesScraped++;
+            }
+
+            await browser.close();
             this.logger.log(`Scraped ${results.length} products`);
             return results;
         } catch (error) {
@@ -293,114 +292,108 @@ export class ScraperService {
         let detail: ScrapedProductDetail = {};
         const reviews: ScrapedReview[] = [];
 
-        const crawler = new PlaywrightCrawler({
-            maxRequestsPerCrawl: 1,
-            requestHandlerTimeoutSecs: 60,
-            launchContext: {
-                launchOptions: {
-                    headless: true,
-                },
-            },
-            async requestHandler({ page }) {
-                await page.waitForLoadState('networkidle');
-                await this.delay(1000);
-
-                // Extract description
-                const description = await page
-                    .$eval(
-                        '.description, .product-description, [data-description]',
-                        (el) => el.textContent?.trim(),
-                    )
-                    .catch(() => undefined);
-
-                // Extract ISBN
-                const isbn = await page
-                    .$eval(
-                        '[data-isbn], .isbn',
-                        (el) => el.textContent?.trim(),
-                    )
-                    .catch(() => undefined);
-
-                // Extract publisher
-                const publisher = await page
-                    .$eval(
-                        '.publisher, [data-publisher]',
-                        (el) => el.textContent?.trim(),
-                    )
-                    .catch(() => undefined);
-
-                // Extract publication date
-                const publicationDate = await page
-                    .$eval(
-                        '.publication-date, [data-publication-date]',
-                        (el) => el.textContent?.trim(),
-                    )
-                    .catch(() => undefined);
-
-                // Extract related products
-                const relatedProducts = await page
-                    .$$eval('.related-product a, .recommended a', (elements) =>
-                        elements.map((el) => (el as HTMLAnchorElement).href),
-                    )
-                    .catch(() => []);
-
-                // Extract specs
-                const specs = await page
-                    .$$eval('.specs tr, .product-specs tr', (rows) => {
-                        const specsObj: Record<string, any> = {};
-                        rows.forEach((row) => {
-                            const cells = row.querySelectorAll('td, th');
-                            if (cells.length >= 2) {
-                                const key = cells[0].textContent?.trim() || '';
-                                const value = cells[1].textContent?.trim() || '';
-                                if (key) specsObj[key] = value;
-                            }
-                        });
-                        return specsObj;
-                    })
-                    .catch(() => ({}));
-
-                detail = {
-                    description,
-                    specs: Object.keys(specs).length > 0 ? specs : undefined,
-                    isbn,
-                    publisher,
-                    publicationDate,
-                    relatedProducts:
-                        relatedProducts.length > 0 ? relatedProducts : undefined,
-                };
-
-                // Extract reviews
-                const reviewElements = await page
-                    .$$eval('.review, .product-review, [data-review]', (elements) =>
-                        elements.map((el) => {
-                            const authorEl = el.querySelector('.author, .reviewer');
-                            const ratingEl = el.querySelector('[data-rating], .rating');
-                            const textEl = el.querySelector('.review-text, .comment');
-                            const titleEl = el.querySelector('.review-title');
-                            const dateEl = el.querySelector('.review-date, .date');
-
-                            const ratingText = ratingEl?.textContent?.trim() || '';
-                            const ratingMatch = ratingText.match(/(\d+)/);
-                            const rating = ratingMatch ? parseInt(ratingMatch[1], 10) : 0;
-
-                            return {
-                                author: authorEl?.textContent?.trim(),
-                                rating,
-                                text: textEl?.textContent?.trim(),
-                                title: titleEl?.textContent?.trim(),
-                                reviewDate: dateEl?.textContent?.trim(),
-                            };
-                        }),
-                    )
-                    .catch(() => []);
-
-                reviews.push(...reviewElements.filter((r) => r.rating > 0));
-            },
-        });
-
         try {
-            await crawler.run([url]);
+            const { chromium } = require('playwright');
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await this.delay(2000);
+
+            // Extract description
+            const description = await page
+                .$eval(
+                    '.description, .product-description, [data-description]',
+                    (el: any) => el.textContent?.trim(),
+                )
+                .catch(() => undefined);
+
+            // Extract ISBN
+            const isbn = await page
+                .$eval(
+                    '[data-isbn], .isbn',
+                    (el: any) => el.textContent?.trim(),
+                )
+                .catch(() => undefined);
+
+            // Extract publisher
+            const publisher = await page
+                .$eval(
+                    '.publisher, [data-publisher]',
+                    (el: any) => el.textContent?.trim(),
+                )
+                .catch(() => undefined);
+
+            // Extract publication date
+            const publicationDate = await page
+                .$eval(
+                    '.publication-date, [data-publication-date]',
+                    (el: any) => el.textContent?.trim(),
+                )
+                .catch(() => undefined);
+
+            // Extract related products
+            const relatedProducts = await page
+                .$$eval('.related-product a, .recommended a', (elements: any[]) =>
+                    elements.map((el) => (el as HTMLAnchorElement).href),
+                )
+                .catch(() => []);
+
+            // Extract specs
+            const specs = await page
+                .$$eval('.specs tr, .product-specs tr', (rows: any[]) => {
+                    const specsObj: Record<string, any> = {};
+                    rows.forEach((row) => {
+                        const cells = row.querySelectorAll('td, th');
+                        if (cells.length >= 2) {
+                            const key = cells[0].textContent?.trim() || '';
+                            const value = cells[1].textContent?.trim() || '';
+                            if (key) specsObj[key] = value;
+                        }
+                    });
+                    return specsObj;
+                })
+                .catch(() => ({}));
+
+            detail = {
+                description,
+                specs: Object.keys(specs).length > 0 ? specs : undefined,
+                isbn,
+                publisher,
+                publicationDate,
+                relatedProducts:
+                    relatedProducts.length > 0 ? relatedProducts : undefined,
+            };
+
+            // Extract reviews
+            const reviewElements = await page
+                .$$eval('.review, .product-review, [data-review]', (elements: any[]) =>
+                    elements.map((el) => {
+                        const authorEl = el.querySelector('.author, .reviewer');
+                        const ratingEl = el.querySelector('[data-rating], .rating');
+                        const textEl = el.querySelector('.review-text, .comment');
+                        const titleEl = el.querySelector('.review-title');
+                        const dateEl = el.querySelector('.review-date, .date');
+
+                        const ratingText = ratingEl?.textContent?.trim() || '';
+                        const ratingMatch = ratingText.match(/(\d+)/);
+                        const rating = ratingMatch ? parseInt(ratingMatch[1], 10) : 0;
+
+                        return {
+                            author: authorEl?.textContent?.trim(),
+                            rating,
+                            ratingText, // Keeping context
+                            text: textEl?.textContent?.trim(),
+                            title: titleEl?.textContent?.trim(),
+                            reviewDate: dateEl?.textContent?.trim(),
+                        };
+                    }),
+                )
+                .catch(() => []);
+
+            reviews.push(...reviewElements.filter((r: any) => r.rating > 0));
+
+            await browser.close();
             this.logger.log(
                 `Scraped product detail with ${reviews.length} reviews`,
             );

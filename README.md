@@ -213,6 +213,34 @@ The API follows RESTful conventions. Full interactive documentation is available
 
 ## 🚀 Deployment
 
+### Quick Start with Docker (Recommended)
+
+The easiest way to run the entire stack locally:
+
+```bash
+# Clone the repository
+git clone https://github.com/rooter09/webscrapping.git
+cd webscrapping
+
+# Copy environment file
+cp .env.docker.example .env
+# Edit .env with your configuration
+
+# Start all services (PostgreSQL, Backend, Frontend)
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+Access the application:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:4000
+- API Docs: http://localhost:4000/api
+
 ### Backend Deployment (Render/Railway)
 
 1. Create a PostgreSQL database
@@ -239,6 +267,8 @@ The API follows RESTful conventions. Full interactive documentation is available
    NEXT_PUBLIC_API_URL=<your-backend-url>
    ```
 4. Deploy
+
+**📖 For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)**
 
 ## 🧪 Testing
 
