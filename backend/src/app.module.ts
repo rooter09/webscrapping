@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import * as entities from './entities';
 import { NavigationModule } from './modules/navigation/navigation.module';
 import { CategoryModule } from './modules/category/category.module';
@@ -37,7 +35,5 @@ import { ScraperModule } from './scraper/scraper.module';
     ViewHistoryModule,
     ScraperModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule { }
