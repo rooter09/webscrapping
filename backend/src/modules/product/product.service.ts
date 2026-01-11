@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Product } from '../../entities/product.entity';
 import { ProductDetail } from '../../entities/product-detail.entity';
 import { Review } from '../../entities/review.entity';
@@ -111,7 +111,6 @@ export class ProductService {
         url: string,
         categoryId?: string,
         maxPages: number = 5,
-        force: boolean = false,
     ): Promise<Product[]> {
         this.logger.log(`Scraping products from: ${url}`);
 
@@ -127,10 +126,10 @@ export class ProductService {
             if (product) {
                 // Update existing
                 product.title = item.title;
-                product.author = (item.author || undefined) as any;
-                product.price = (item.price || undefined) as any;
+                product.author = item.author || undefined;
+                product.price = item.price || undefined;
                 product.currency = item.currency;
-                product.imageUrl = (item.imageUrl || undefined) as any;
+                product.imageUrl = item.imageUrl || undefined;
                 product.sourceUrl = item.sourceUrl;
                 product.lastScrapedAt = new Date();
             } else {

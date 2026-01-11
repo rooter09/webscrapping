@@ -29,16 +29,16 @@ export class Product {
     title: string;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
-    author: string;
+    author?: string;
 
     @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-    price: number;
+    price?: number;
 
     @Column({ type: 'varchar', length: 10, default: 'GBP' })
     currency: string;
 
     @Column({ type: 'text', nullable: true })
-    imageUrl: string;
+    imageUrl?: string;
 
     @Column({ type: 'text', unique: true })
     @Index()
@@ -63,10 +63,10 @@ export class Product {
     @OneToOne('ProductDetail', 'product', {
         cascade: true,
     })
-    detail: any;
+    detail?: import('./product-detail.entity').ProductDetail;
 
     @OneToMany('Review', 'product', {
         cascade: true,
     })
-    reviews: any[];
+    reviews?: import('./review.entity').Review[];
 }

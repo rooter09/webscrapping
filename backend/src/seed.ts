@@ -29,4 +29,4 @@ async function seed() {
     }
 }
 
-seed();
+void seed();

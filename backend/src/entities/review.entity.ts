@@ -19,22 +19,22 @@ export class Review {
     productId: string;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
-    author: string;
+    author?: string;
 
     @Column({ type: 'int' })
     rating: number;
 
     @Column({ type: 'text', nullable: true })
-    text: string;
+    text?: string;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
-    title: string;
+    title?: string;
 
     @Column({ type: 'boolean', default: false })
     verified: boolean;
 
     @Column({ type: 'timestamp', nullable: true })
-    reviewDate: Date;
+    reviewDate?: Date;
 
     @CreateDateColumn()
     createdAt: Date;

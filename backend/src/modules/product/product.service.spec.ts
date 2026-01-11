@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductService } from './product.service';
 import { Repository } from 'typeorm';
@@ -11,10 +12,6 @@ import { NotFoundException } from '@nestjs/common';
 
 describe('ProductService', () => {
     let service: ProductService;
-    let productRepository: Repository<Product>;
-    let productDetailRepository: Repository<ProductDetail>;
-    let reviewRepository: Repository<Review>;
-    let scraperService: ScraperService;
 
     const mockProduct = {
         id: '1',
@@ -99,16 +96,11 @@ describe('ProductService', () => {
         }).compile();
 
         service = module.get<ProductService>(ProductService);
-        productRepository = module.get<Repository<Product>>(
-            getRepositoryToken(Product),
-        );
-        productDetailRepository = module.get<Repository<ProductDetail>>(
-            getRepositoryToken(ProductDetail),
-        );
-        reviewRepository = module.get<Repository<Review>>(
-            getRepositoryToken(Review),
-        );
-        scraperService = module.get<ScraperService>(ScraperService);
+        // Repositories are mocked but not directly used in tests
+        // productRepository = module.get<Repository<Product>>(getRepositoryToken(Product));
+        // productDetailRepository = module.get<Repository<ProductDetail>>(getRepositoryToken(ProductDetail));
+        // reviewRepository = module.get<Repository<Review>>(getRepositoryToken(Review));
+        // scraperService = module.get<ScraperService>(ScraperService);
     });
 
     afterEach(() => {
@@ -208,12 +200,11 @@ describe('ProductService', () => {
             const result = await service.scrapeAndStoreProducts(
                 'https://example.com/category',
                 'cat1',
-                1,
-                true
+                1
             );
 
             expect(result).toBeDefined();
-            expect(scraperService.scrapeProducts).toHaveBeenCalled();
+            expect(mockScraperService.scrapeProducts).toHaveBeenCalled();
         });
     });
 
@@ -222,7 +213,7 @@ describe('ProductService', () => {
             // Spy on the service method that refreshProduct calls
             const scrapeAndStoreDetailSpy = jest
                 .spyOn(service, 'scrapeAndStoreProductDetail')
-                .mockResolvedValue(mockProduct);
+                .mockResolvedValue(mockProduct as Product);
 
             const result = await service.refreshProduct('1');
 

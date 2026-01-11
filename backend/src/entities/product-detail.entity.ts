@@ -18,28 +18,28 @@ export class ProductDetail {
     productId: string;
 
     @Column({ type: 'text', nullable: true })
-    description: string;
+    description?: string;
 
     @Column({ type: 'jsonb', nullable: true })
-    specs: Record<string, any>;
+    specs?: Record<string, unknown>;
 
     @Column({ type: 'decimal', precision: 3, scale: 2, nullable: true })
-    ratingsAvg: number;
+    ratingsAvg?: number;
 
     @Column({ type: 'int', default: 0 })
     reviewsCount: number;
 
     @Column({ type: 'varchar', length: 50, nullable: true })
-    isbn: string;
+    isbn?: string;
 
     @Column({ type: 'varchar', length: 255, nullable: true })
-    publisher: string;
+    publisher?: string;
 
     @Column({ type: 'date', nullable: true })
-    publicationDate: Date;
+    publicationDate?: Date;
 
     @Column({ type: 'simple-array', nullable: true })
-    relatedProductIds: string[];
+    relatedProductIds?: string[];
 
     @CreateDateColumn()
     createdAt: Date;
