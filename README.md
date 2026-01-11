@@ -1,14 +1,14 @@
 # Product Data Explorer - Full-Stack Web Scraping Application
 
-A production-ready product exploration platform that enables users to navigate from high-level headings → categories → products → product detail pages, powered by live, on-demand scraping from **World of Books**.
+A production-ready product exploration platform that enables users to navigate from high-level headings to categories to products to product detail pages, powered by live, on-demand scraping from World of Books.
 
-## 🚀 Live Demo
+## Live Demo
 
-- **Frontend**: [Deployment URL - To be added after deployment]
-- **Backend API**: [Deployment URL - To be added after deployment]
-- **API Documentation**: [Swagger URL - To be added after deployment]
+- Frontend: [Deployment URL - To be added after deployment]
+- Backend API: [Deployment URL - To be added after deployment]
+- API Documentation: [Swagger URL - To be added after deployment]
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Features](#features)
 - [Technology Stack](#technology-stack)
@@ -20,53 +20,54 @@ A production-ready product exploration platform that enables users to navigate f
 - [Testing](#testing)
 - [Ethical Scraping](#ethical-scraping)
 
-## ✨ Features
+## Features
 
 ### Core Features
-- ✅ **Live Web Scraping**: Real-time data extraction from World of Books using Crawlee + Playwright
-- ✅ **Hierarchical Navigation**: Browse from navigation headings → categories → products → details
-- ✅ **Advanced Filtering**: Search and filter products by price, rating, author, and more
-- ✅ **Intelligent Caching**: TTL-based caching (24 hours default) to minimize server load
-- ✅ **On-Demand Refresh**: Manually trigger data updates for specific products
-- ✅ **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- ✅ **Browsing History**: Client-side and server-side history tracking
-- ✅ **Product Reviews**: Display user reviews and ratings
-- ✅ **Related Products**: Show product recommendations
+- Live Web Scraping: Real-time data extraction from World of Books using Crawlee + Playwright
+- Hierarchical Navigation: Browse from navigation headings to categories to products to details
+- Advanced Filtering: Search and filter products by price, rating, author, and more
+- Intelligent Caching: TTL-based caching (24 hours default) to minimize server load
+- On-Demand Refresh: Manually trigger data updates for specific products
+- Responsive Design: Optimized for desktop, tablet, and mobile devices
+- Browsing History: Client-side and server-side history tracking
+- Product Reviews: Display user reviews and ratings
+- Related Products: Show product recommendations
 
 ### Bonus Features
-- ✅ **Product Search**: Full-text search across titles and authors
-- ✅ **Rich Filters**: Price range, minimum rating, author filters
-- ✅ **Pagination**: Efficient pagination for large product lists
-- ✅ **Loading States**: Skeleton screens for better UX
-- ✅ **Error Handling**: Comprehensive error handling and user feedback
-- ✅ **API Documentation**: Interactive Swagger/OpenAPI documentation
-- ✅ **Accessibility**: WCAG AA compliant with keyboard navigation
+- Product Search: Full-text search across titles and authors
+- Rich Filters: Price range, minimum rating, author filters
+- Pagination: Efficient pagination for large product lists
+- Loading States: Skeleton screens for better UX
+- Error Handling: Comprehensive error handling and user feedback
+- API Documentation: Interactive Swagger/OpenAPI documentation
+- Accessibility: WCAG AA compliant with keyboard navigation
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 ### Frontend
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Data Fetching**: SWR (Stale-While-Revalidate)
-- **HTTP Client**: Axios
-- **Deployment**: Vercel
+- Framework: Next.js 14 (App Router)
+- Language: TypeScript
+- Styling: Tailwind CSS
+- Data Fetching: SWR (Stale-While-Revalidate)
+- HTTP Client: Axios
+- Deployment: Vercel
 
 ### Backend
-- **Framework**: NestJS
-- **Language**: TypeScript
-- **Database**: PostgreSQL 14+
-- **ORM**: TypeORM
-- **Scraping**: Crawlee + Playwright
-- **Documentation**: Swagger/OpenAPI
-- **Deployment**: Render/Railway/Fly.io
+- Framework: NestJS
+- Language: TypeScript
+- Database: PostgreSQL 14+
+- ORM: TypeORM
+- Scraping: Crawlee + Playwright
+- Documentation: Swagger/OpenAPI
+- Deployment: Render/Railway/Fly.io
 
 ### DevOps
-- **CI/CD**: GitHub Actions
-- **Version Control**: Git
-- **Package Manager**: npm
+- CI/CD: GitHub Actions
+- Containerization: Docker + Docker Compose
+- Version Control: Git
+- Package Manager: npm
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 product-data-explorer/
@@ -75,7 +76,8 @@ product-data-explorer/
 │   │   ├── page.tsx        # Home page
 │   │   ├── products/       # Products pages
 │   │   ├── categories/     # Categories pages
-│   │   └── about/          # About page
+│   │   ├── about/          # About page
+│   │   └── contact/        # Contact page
 │   ├── components/          # Reusable React components
 │   ├── lib/                # Utilities and API client
 │   └── types/              # TypeScript type definitions
@@ -97,7 +99,7 @@ product-data-explorer/
 └── README.md               # This file
 ```
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -105,54 +107,64 @@ product-data-explorer/
 - PostgreSQL 14+
 - Git
 
-### Installation
+### Quick Start with Docker (Recommended)
 
-1. **Clone the repository**
+```bash
+git clone https://github.com/rooter09/webscrapping.git
+cd webscrapping
+
+cp .env.docker.example .env
+
+docker-compose up -d
+
+# Access the application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:4000
+# API Docs: http://localhost:4000/api
+```
+
+### Manual Installation
+
+1. Clone the repository
 
 ```bash
 git clone https://github.com/rooter09/webscrapping.git
 cd webscrapping
 ```
 
-2. **Set up the backend**
+2. Set up the backend
 
 ```bash
 cd backend
 npm install
 
-# Copy environment variables
 cp .env.example .env
 # Edit .env with your database credentials
 
-# Create PostgreSQL database
 createdb product_explorer
 
-# Run database migrations
 npm run seed
 
-# Start the backend
 npm run start:dev
 ```
 
 The backend will be available at `http://localhost:4000`
 API Documentation: `http://localhost:4000/api`
 
-3. **Set up the frontend**
+3. Set up the frontend
 
 ```bash
 cd frontend
 npm install
 
-# Create environment file
 echo "NEXT_PUBLIC_API_URL=http://localhost:4000" > .env.local
 
-# Start the frontend
 npm run dev
 ```
 
 The frontend will be available at `http://localhost:3000`
 
-## 📚 API Documentation
+## API Documentation
 
 The API follows RESTful conventions. Full interactive documentation is available via Swagger at `/api` when the backend is running.
 
@@ -179,7 +191,7 @@ The API follows RESTful conventions. Full interactive documentation is available
 - `POST /view-history` - Record a page view
 - `GET /view-history/session/:sessionId` - Get session history
 
-## 🗄️ Database Schema
+## Database Schema
 
 ### Entities
 
@@ -211,35 +223,7 @@ The API follows RESTful conventions. Full interactive documentation is available
 - Stores user browsing history
 - Fields: id, userId, sessionId, pathJson, url, productId, categoryId
 
-## 🚀 Deployment
-
-### Quick Start with Docker (Recommended)
-
-The easiest way to run the entire stack locally:
-
-```bash
-# Clone the repository
-git clone https://github.com/rooter09/webscrapping.git
-cd webscrapping
-
-# Copy environment file
-cp .env.docker.example .env
-# Edit .env with your configuration
-
-# Start all services (PostgreSQL, Backend, Frontend)
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-```
-
-Access the application:
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:4000
-- API Docs: http://localhost:4000/api
+## Deployment
 
 ### Backend Deployment (Render/Railway)
 
@@ -268,9 +252,7 @@ Access the application:
    ```
 4. Deploy
 
-**📖 For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)**
-
-## 🧪 Testing
+## Testing
 
 ### Backend Tests
 
@@ -285,25 +267,24 @@ npm run test:cov       # Coverage report
 
 ```bash
 cd frontend
-npm run test           # Jest tests
 npm run lint           # ESLint
 ```
 
-## 🔒 Ethical Scraping
+## Ethical Scraping
 
 This project implements responsible web scraping practices:
 
-- ✅ Respects robots.txt and terms of service
-- ✅ Implements rate limiting (2-3 seconds between requests)
-- ✅ Uses exponential backoff on errors
-- ✅ Aggressive caching to minimize requests (24-hour TTL)
-- ✅ Proper error handling and logging
-- ✅ User-agent identification
-- ✅ Monitoring of scraping impact
+- Respects robots.txt and terms of service
+- Implements rate limiting (2-3 seconds between requests)
+- Uses exponential backoff on errors
+- Aggressive caching to minimize requests (24-hour TTL)
+- Proper error handling and logging
+- User-agent identification
+- Monitoring of scraping impact
 
-**Note**: This project is for educational purposes. Always ensure you have permission to scrape websites and comply with their terms of service.
+Note: This project is for educational purposes. Always ensure you have permission to scrape websites and comply with their terms of service.
 
-## 📊 Performance
+## Performance
 
 - Database indexing on frequently queried fields
 - Pagination for all list endpoints
@@ -312,7 +293,7 @@ This project implements responsible web scraping practices:
 - Efficient caching strategy
 - Connection pooling for database
 
-## ♿ Accessibility
+## Accessibility
 
 - Semantic HTML5 elements
 - Keyboard navigation support
@@ -321,19 +302,19 @@ This project implements responsible web scraping practices:
 - WCAG AA color contrast compliance
 - Focus visible states
 
-## 🤝 Contributing
+## Contributing
 
 This is an assignment project. For questions or issues, please contact the repository owner.
 
-## 📄 License
+## License
 
 This project is created as part of a technical assignment.
 
-## 👤 Author
+## Author
 
 - GitHub: [@rooter09](https://github.com/rooter09)
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - World of Books for the data source
 - NestJS and Next.js communities
@@ -341,4 +322,4 @@ This project is created as part of a technical assignment.
 
 ---
 
-**Built with ❤️ using Next.js, NestJS, and TypeScript**
+Built with Next.js, NestJS, and TypeScript
